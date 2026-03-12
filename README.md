@@ -77,6 +77,15 @@ Recommended public download location:
 
 - `https://github.com/ShadowKernal/OnePlace/releases`
 
+## macOS Release Notes
+
+macOS builds are architecture-specific.
+
+- Intel Macs need the `x64` macOS release asset
+- Apple Silicon Macs need the `aarch64` macOS release asset
+
+If you publish only one macOS `.dmg`, one class of Mac users will get a build that does not launch.
+
 ## Notes
 
 - Tauri bundling is enabled in `src-tauri/tauri.conf.json`.

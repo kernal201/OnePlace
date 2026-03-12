@@ -1,7 +1,7 @@
 {
   "name": "fun",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
@@ -9,13 +9,17 @@
     "build": "tauri build",
     "build:web": "tsc -b && vite build --base ./",
     "build:installer": "tauri build",
+    "build:release": "node scripts/build-signed-release.mjs",
     "dist": "tauri build",
+    "release:publish": "node scripts/publish-updater-release.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-dialog": "^2.6.0",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.9.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

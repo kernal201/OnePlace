@@ -1,7 +1,20 @@
 import { invoke } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
+import { relaunch } from '@tauri-apps/plugin-process'
+import { check } from '@tauri-apps/plugin-updater'
 
 const DATA_KEY = 'oneplace-data'
+
+export type DesktopUpdateInfo = {
+  body?: string
+  currentVersion: string
+  version: string
+}
+
+export type DesktopUpdateProgress =
+  | { event: 'Started'; data: { contentLength: number | null } }
+  | { event: 'Progress'; data: { chunkLength: number } }
+  | { event: 'Finished' }
 
 const isTauriRuntime = () =>
   typeof window !== 'undefined' &&
@@ -50,6 +63,54 @@ export const getDesktopAppInfo = async (): Promise<DesktopAppInfo | null> => {
   }
 
   return null
+}
+
+export const checkForDesktopUpdate = async (): Promise<DesktopUpdateInfo | null> => {
+  if (!isTauriRuntime()) return null
+
+  const update = await check()
+  if (!update) return null
+
+  return {
+    body: update.body ?? undefined,
+    currentVersion: update.currentVersion,
+    version: update.version,
+  }
+}
+
+export const downloadAndInstallDesktopUpdate = async (
+  onEvent?: (event: DesktopUpdateProgress) => void,
+): Promise<void> => {
+  if (!isTauriRuntime()) return
+
+  const update = await check()
+  if (!update) return
+
+  await update.downloadAndInstall((event) => {
+    if (event.event === 'Started') {
+      onEvent?.({
+        event: 'Started',
+        data: {
+          contentLength: event.data.contentLength ?? null,
+        },
+      })
+      return
+    }
+
+    if (event.event === 'Progress') {
+      onEvent?.({
+        event: 'Progress',
+        data: {
+          chunkLength: event.data.chunkLength,
+        },
+      })
+      return
+    }
+
+    onEvent?.({ event: 'Finished' })
+  })
+
+  await relaunch()
 }
 
 export const pickNotebookDirectory = async (): Promise<string | null> => {

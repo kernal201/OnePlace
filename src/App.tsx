@@ -50,6 +50,8 @@ import {
   UndoIcon,
 } from './components/Icons'
 import {
+  checkForDesktopUpdate,
+  downloadAndInstallDesktopUpdate,
   exportNotebookDirectory,
   getDesktopAppInfo,
   loadDesktopData,
@@ -1413,6 +1415,67 @@ function App() {
     }
     void load()
   }, [])
+
+  useEffect(() => {
+    if (!isLoaded || !appInfo) return
+
+    let cancelled = false
+
+    const checkForUpdates = async () => {
+      try {
+        const update = await checkForDesktopUpdate()
+        if (!update || cancelled) return
+
+        const shouldInstall = window.confirm(
+          [
+            `OnePlace ${update.version} is available.`,
+            '',
+            update.body?.trim() || 'An application update is ready to install.',
+            '',
+            'Install now? The app will restart after the update.',
+          ].join('\n'),
+        )
+
+        if (!shouldInstall) {
+          setSaveLabel(`Update available: ${update.version}`)
+          return
+        }
+
+        let downloaded = 0
+        let contentLength = 0
+        setSaveLabel(`Downloading update ${update.version}...`)
+        await downloadAndInstallDesktopUpdate((event) => {
+          if (cancelled) return
+
+          if (event.event === 'Started') {
+            contentLength = event.data.contentLength ?? 0
+            downloaded = 0
+            setSaveLabel(`Downloading update ${update.version}...`)
+            return
+          }
+
+          if (event.event === 'Progress') {
+            downloaded += event.data.chunkLength
+            if (contentLength > 0) {
+              const percent = Math.min(100, Math.round((downloaded / contentLength) * 100))
+              setSaveLabel(`Installing update ${update.version}... ${percent}%`)
+            }
+            return
+          }
+
+          setSaveLabel(`Restarting into OnePlace ${update.version}...`)
+        })
+      } catch {
+        if (!cancelled) setSaveLabel('Update check failed')
+      }
+    }
+
+    void checkForUpdates()
+
+    return () => {
+      cancelled = true
+    }
+  }, [appInfo, isLoaded])
 
   useEffect(() => {
     if (!isLoaded) return
@@ -4711,7 +4774,7 @@ function App() {
               <div className="status-strip">
                 <span>{saveStatusText}</span>
                 <span>
-                  {appInfo?.name ?? 'OnePlace'} | {searchScopeLabels[searchScope]}
+                  {appInfo?.name ?? 'OnePlace'} {appInfo?.version ? `v${appInfo.version}` : ''} | {searchScopeLabels[searchScope]}
                 </span>
               </div>
             </div>
