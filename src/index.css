@@ -1,0 +1,27 @@
+body {
+  margin: 0;
+  min-width: 1240px;
+  min-height: 100vh;
+  font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  background: linear-gradient(180deg, #edf2f7 0%, #e7edf5 100%);
+  color: #26292f;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100vw;
+}
