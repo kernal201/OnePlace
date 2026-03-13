@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.6 - 2026-03-13
+
+- Fixed drag-and-drop for visible sections in the left notebook pane.
+- Added drop indicators for section reordering.
+
 ## 0.1.5 - 2026-03-12
 
 - Moved the visible app version into the note header beside the page action buttons.

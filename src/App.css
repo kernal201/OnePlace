@@ -3098,6 +3098,18 @@
   box-shadow: none;
 }
 
+.notebook-section-link.dragging {
+  opacity: 0.58;
+}
+
+.notebook-section-link.drop-before {
+  box-shadow: inset 0 3px 0 #8b63ba;
+}
+
+.notebook-section-link.drop-after {
+  box-shadow: inset 0 -3px 0 #8b63ba;
+}
+
 .notebook-glyph,
 .page-accent,
 .page-date,

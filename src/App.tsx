@@ -4522,18 +4522,42 @@ function App() {
                   <div className="notebook-sections">
                     {item.sectionGroups.flatMap((group) =>
                       group.sections.map((entry) => (
+                        (() => {
+                          const isSectionDropTarget =
+                            dropTarget?.type === 'section' && 'sectionId' in dropTarget && dropTarget.sectionId === entry.id
+
+                          return (
                         <button
                           key={entry.id}
-                          className={`notebook-section-link ${item.id === notebook?.id && entry.id === section?.id ? 'active' : ''}`}
+                          className={`notebook-section-link ${item.id === notebook?.id && entry.id === section?.id ? 'active' : ''} ${dragState?.type === 'section' && dragState.sectionId === entry.id ? 'dragging' : ''} ${isSectionDropTarget && dropTarget.position === 'before' ? 'drop-before' : ''} ${isSectionDropTarget && dropTarget.position === 'after' ? 'drop-after' : ''}`}
                           onClick={() => {
                             selectNotebook(item.id)
                             selectSection(group.id, entry.id)
+                          }}
+                          onPointerDown={(event) => {
+                            if (item.id !== notebook?.id) return
+                            beginDrag(event, { type: 'section', groupId: group.id, sectionId: entry.id })
+                          }}
+                          onPointerEnter={allowDrop}
+                          onPointerMove={(event) => {
+                            if (item.id !== notebook?.id) return
+                            setSectionDropTarget(event, group.id, entry.id)
+                          }}
+                          onPointerUp={() => {
+                            if (
+                              item.id === notebook?.id &&
+                              isSectionDropTarget
+                            ) {
+                              moveSection(group.id, entry.id, dropTarget.position)
+                            }
                           }}
                           type="button"
                         >
                           <span className="section-color" style={{ backgroundColor: entry.color }} />
                           <span>{entry.name}</span>
                         </button>
+                          )
+                        })()
                       )),
                     )}
                     <button
