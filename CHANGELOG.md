@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3 - 2026-03-12
+
+- Fixed automatic update checks so they run even when desktop app metadata is unavailable.
+- Added a manual `Check for updates` action in the left pane footer.
+- Improved update status messages for no-update and failure cases.
+
 ## 0.1.2 - 2026-03-12
 
 - Added in-app update prompts that show the latest release notes before install.

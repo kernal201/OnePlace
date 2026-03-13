@@ -1337,6 +1337,7 @@ function App() {
   const [isTranscribing, setIsTranscribing] = useState(false)
   const [unlockedSectionIds, setUnlockedSectionIds] = useState<string[]>([])
   const [saveLabel, setSaveLabel] = useState('Loading notes...')
+  const [isCheckingForUpdates, setIsCheckingForUpdates] = useState(false)
   const [isStyleMenuOpen, setIsStyleMenuOpen] = useState(false)
   const [isFontMenuOpen, setIsFontMenuOpen] = useState(false)
   const [isFontSizeMenuOpen, setIsFontSizeMenuOpen] = useState(false)
@@ -1351,6 +1352,7 @@ function App() {
   const imageInputRef = useRef<HTMLInputElement | null>(null)
   const attachmentInputRef = useRef<HTMLInputElement | null>(null)
   const printoutInputRef = useRef<HTMLInputElement | null>(null)
+  const isCheckingForUpdatesRef = useRef(false)
   const titlebarSearchRef = useRef<HTMLDivElement | null>(null)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const drawSurfaceRef = useRef<SVGSVGElement | null>(null)
@@ -1416,12 +1418,74 @@ function App() {
     void load()
   }, [])
 
-  useEffect(() => {
-    if (!isLoaded || !appInfo) return
+  const runUpdateCheck = async (mode: 'automatic' | 'manual' = 'manual') => {
+    if (isCheckingForUpdatesRef.current) return
 
+    isCheckingForUpdatesRef.current = true
+    setIsCheckingForUpdates(true)
+
+    try {
+      const update = await checkForDesktopUpdate()
+      if (!update) {
+        if (mode === 'manual') setSaveLabel('OnePlace is up to date')
+        return
+      }
+
+      const shouldInstall = window.confirm(
+        [
+          `OnePlace ${update.version} is available.`,
+          '',
+          update.body?.trim() || 'An application update is ready to install.',
+          '',
+          'Install now? The app will restart after the update.',
+        ].join('\n'),
+      )
+
+      if (!shouldInstall) {
+        setSaveLabel(`Update available: ${update.version}`)
+        return
+      }
+
+      let downloaded = 0
+      let contentLength = 0
+      setSaveLabel(`Downloading update ${update.version}...`)
+      await downloadAndInstallDesktopUpdate((event) => {
+        if (event.event === 'Started') {
+          contentLength = event.data.contentLength ?? 0
+          downloaded = 0
+          setSaveLabel(`Downloading update ${update.version}...`)
+          return
+        }
+
+        if (event.event === 'Progress') {
+          downloaded += event.data.chunkLength
+          if (contentLength > 0) {
+            const percent = Math.min(100, Math.round((downloaded / contentLength) * 100))
+            setSaveLabel(`Installing update ${update.version}... ${percent}%`)
+          }
+          return
+        }
+
+        setSaveLabel(`Restarting into OnePlace ${update.version}...`)
+      })
+    } catch {
+      setSaveLabel('Update check failed')
+    } finally {
+      isCheckingForUpdatesRef.current = false
+      setIsCheckingForUpdates(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!isLoaded) return
     let cancelled = false
 
-    const checkForUpdates = async () => {
+    const checkForUpdatesOnLaunch = async () => {
+      if (isCheckingForUpdatesRef.current) return
+
+      isCheckingForUpdatesRef.current = true
+      setIsCheckingForUpdates(true)
+
       try {
         const update = await checkForDesktopUpdate()
         if (!update || cancelled) return
@@ -1467,15 +1531,18 @@ function App() {
         })
       } catch {
         if (!cancelled) setSaveLabel('Update check failed')
+      } finally {
+        isCheckingForUpdatesRef.current = false
+        if (!cancelled) setIsCheckingForUpdates(false)
       }
     }
 
-    void checkForUpdates()
+    void checkForUpdatesOnLaunch()
 
     return () => {
       cancelled = true
     }
-  }, [appInfo, isLoaded])
+  }, [isLoaded])
 
   useEffect(() => {
     if (!isLoaded) return
@@ -4480,9 +4547,13 @@ function App() {
               ))}
             </div>
             <div className="pane-footer">
-              <button className="settings-button" type="button">
+              <button
+                className="settings-button"
+                onClick={() => void runUpdateCheck('manual')}
+                type="button"
+              >
                 <SettingsIcon size={16} />
-                <span>Settings</span>
+                <span>{isCheckingForUpdates ? 'Checking...' : 'Check for updates'}</span>
               </button>
             </div>
           </aside>
