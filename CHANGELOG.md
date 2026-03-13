@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4 - 2026-03-12
+
+- Always show the app version in the bottom-right status strip.
+- Added a frontend build-time version fallback when desktop app info is unavailable.
+
 ## 0.1.3 - 2026-03-12
 
 - Fixed automatic update checks so they run even when desktop app metadata is unavailable.

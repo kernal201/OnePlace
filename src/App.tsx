@@ -4362,6 +4362,7 @@ function App() {
           : ''
   const windowTitle = `${page?.title?.trim() || 'Untitled Page'} - ${notebook?.name ?? 'Notebook'} - OneNote`
   const saveStatusText = isDirty ? `${saveLabel} · Unsaved changes` : saveLabel
+  const displayVersion = appInfo?.version ?? __APP_VERSION__
   const suggestedPrompts = [
     'Change this bulleted list into full sentences and paragraphs',
     'Draft a plan for a team offsite in Santa Fe',
@@ -4845,7 +4846,7 @@ function App() {
               <div className="status-strip">
                 <span>{saveStatusText}</span>
                 <span>
-                  {appInfo?.name ?? 'OnePlace'} {appInfo?.version ? `v${appInfo.version}` : ''} | {searchScopeLabels[searchScope]}
+                  {appInfo?.name ?? 'OnePlace'} v{displayVersion} | {searchScopeLabels[searchScope]}
                 </span>
               </div>
             </div>
