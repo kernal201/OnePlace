@@ -10,6 +10,7 @@ const version = tauriConfig.version
 const tag = `v${version}`
 const repo = process.env.GITHUB_REPOSITORY || 'ShadowKernal/OnePlace'
 const bundleRoot = path.join(repoRoot, 'src-tauri', 'target', 'release', 'bundle')
+const changelogPath = path.join(repoRoot, 'CHANGELOG.md')
 
 const runGh = (args) =>
   execFileSync('gh', args, {
@@ -26,6 +27,25 @@ const releaseExists = () => {
     return false
   }
 }
+
+const defaultReleaseNotes = `Release ${tag}`
+
+const releaseNotes = (() => {
+  if (!existsSync(changelogPath)) {
+    return defaultReleaseNotes
+  }
+
+  const changelog = readFileSync(changelogPath, 'utf8')
+  const escapedVersion = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const sectionPattern = new RegExp(
+    `^##\\s+${escapedVersion}(?:\\s+-\\s+.+)?\\r?\\n([\\s\\S]*?)(?=^##\\s+|\\Z)`,
+    'm',
+  )
+  const match = changelog.match(sectionPattern)
+  const body = match?.[1]?.trim()
+
+  return body || defaultReleaseNotes
+})()
 
 const pickFirstAsset = (dir, matcher) => {
   const entry = readdirSync(dir, { withFileTypes: true })
@@ -84,6 +104,9 @@ const assetForCurrentPlatform = (() => {
 const tempDir = mkdtempSync(path.join(tmpdir(), 'oneplace-release-'))
 
 try {
+  const releaseNotesPath = path.join(tempDir, 'release-notes.md')
+  writeFileSync(releaseNotesPath, `${releaseNotes}\n`)
+
   if (!releaseExists()) {
     runGh([
       'release',
@@ -93,14 +116,16 @@ try {
       repo,
       '--title',
       `OnePlace ${tag}`,
-      '--notes',
-      `Release ${tag}`,
+      '--notes-file',
+      releaseNotesPath,
     ])
+  } else {
+    runGh(['release', 'edit', tag, '--repo', repo, '--notes-file', releaseNotesPath])
   }
 
   let latest = {
     version,
-    notes: `Release ${tag}`,
+    notes: releaseNotes,
     pub_date: new Date().toISOString(),
     platforms: {},
   }
@@ -113,6 +138,7 @@ try {
   }
 
   latest.version = version
+  latest.notes = releaseNotes
   latest.pub_date = new Date().toISOString()
   latest.platforms = {
     ...latest.platforms,
