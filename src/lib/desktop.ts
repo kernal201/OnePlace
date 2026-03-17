@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import { open } from '@tauri-apps/plugin-dialog'
+import { open, save } from '@tauri-apps/plugin-dialog'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { check } from '@tauri-apps/plugin-updater'
 
@@ -113,17 +113,31 @@ export const downloadAndInstallDesktopUpdate = async (
   await relaunch()
 }
 
-export const pickNotebookDirectory = async (): Promise<string | null> => {
+export const pickDirectory = async (title: string): Promise<string | null> => {
   if (!isTauriRuntime()) return null
 
   const selected = await open({
     directory: true,
     multiple: false,
-    title: 'Open Notebook Folder',
+    title,
   })
 
   return typeof selected === 'string' ? selected : null
 }
+
+export const pickNotebookDirectory = async (): Promise<string | null> =>
+  pickDirectory('Open Notebook Folder')
+
+export const pickExportFilePath = async (defaultPath: string): Promise<string | null> =>
+  save({
+    defaultPath,
+    filters: [
+      { name: 'PDF', extensions: ['pdf'] },
+      { name: 'HTML', extensions: ['html'] },
+      { name: 'Text', extensions: ['txt'] },
+    ],
+    title: 'Export Page',
+  })
 
 export const openNotebookDirectory = async (path: string): Promise<string> =>
   invoke<string>('open_notebook_dir', { path })
@@ -132,3 +146,20 @@ export const exportNotebookDirectory = async (
   path: string,
   notebook: string,
 ): Promise<DesktopSaveResult> => invoke<DesktopSaveResult>('export_notebook_dir', { notebook, path })
+
+export const exportPageFile = async (
+  filePath: string,
+  format: 'html' | 'pdf' | 'txt',
+  title: string,
+  createdAt: string,
+  htmlContents: string,
+  textContents: string,
+): Promise<DesktopSaveResult> =>
+  invoke<DesktopSaveResult>('export_page_file', {
+    createdAt,
+    filePath,
+    format,
+    htmlContents,
+    textContents,
+    title,
+  })

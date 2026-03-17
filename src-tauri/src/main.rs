@@ -1,11 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use chrono::Utc;
+use printpdf::{BuiltinFont, Mm, PdfDocument};
 use serde::Serialize;
 use serde_json::{Map, Value};
 use std::collections::HashSet;
 use std::fs;
 use std::io::ErrorKind;
+use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 use tauri::Manager;
@@ -312,6 +314,66 @@ fn export_notebook_dir(path: String, notebook: String) -> Result<SaveResult, Str
     })
 }
 
+fn export_pdf_file(file_path: &Path, title: &str, created_at: &str, text_contents: &str) -> Result<(), String> {
+    let (doc, page1, layer1) = PdfDocument::new(title, Mm(210.0), Mm(297.0), "Layer 1");
+    let layer = doc.get_page(page1).get_layer(layer1);
+    let font = doc
+        .add_builtin_font(BuiltinFont::Helvetica)
+        .map_err(|err| err.to_string())?;
+    let title_font = doc
+        .add_builtin_font(BuiltinFont::HelveticaBold)
+        .map_err(|err| err.to_string())?;
+
+    layer.use_text(title, 20.0, Mm(20.0), Mm(277.0), &title_font);
+    layer.use_text(format!("Created {created_at}"), 10.0, Mm(20.0), Mm(268.0), &font);
+
+    let mut y = 255.0;
+    for raw_line in text_contents.lines() {
+        let line = raw_line.trim_end();
+        if line.is_empty() {
+            y -= 6.0;
+        } else {
+            layer.use_text(line, 11.0, Mm(20.0), Mm(y), &font);
+            y -= 7.0;
+        }
+
+        if y < 18.0 {
+            break;
+        }
+    }
+
+    let file = fs::File::create(file_path).map_err(|err| err.to_string())?;
+    doc.save(&mut BufWriter::new(file))
+        .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+fn export_page_file(
+    file_path: String,
+    format: String,
+    title: String,
+    created_at: String,
+    html_contents: String,
+    text_contents: String,
+) -> Result<SaveResult, String> {
+    let target_path = PathBuf::from(&file_path);
+    if let Some(parent) = target_path.parent() {
+        fs::create_dir_all(parent).map_err(|err| err.to_string())?;
+    }
+
+    match format.as_str() {
+        "html" => fs::write(&target_path, html_contents).map_err(|err| err.to_string())?,
+        "txt" => fs::write(&target_path, text_contents).map_err(|err| err.to_string())?,
+        "pdf" => export_pdf_file(&target_path, &title, &created_at, &text_contents)?,
+        other => return Err(format!("Unsupported export format: {other}")),
+    }
+
+    Ok(SaveResult {
+        path: target_path.display().to_string(),
+        saved_at: Utc::now().to_rfc3339(),
+    })
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -326,7 +388,8 @@ fn main() {
             save_data,
             get_app_info,
             open_notebook_dir,
-            export_notebook_dir
+            export_notebook_dir,
+            export_page_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

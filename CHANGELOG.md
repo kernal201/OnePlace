@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.8 - 2026-03-17
+
+- Modularized the app shell, editor actions, file actions, clipboard actions, and shared app model utilities.
+- Improved notebook, section-group, and page navigation with more inline creation, rename, and collapse flows.
+- Fixed drawing cursor offset and reduced ink lag during long drags.
+- Fixed inline paste so single-line pasted text stays on the current line.
+- Reworked the Home ribbon styles so heading actions are direct buttons instead of a dropdown.
+- Refined the top header/tab chrome to reduce the active highlight and correct tab label alignment.
+
 ## 0.1.7 - 2026-03-13
 
 - Improved run-tauri-dev.cmd script with better documentation and dynamic path resolution.
