@@ -1,5 +1,6 @@
 import type {
   ClipboardEvent as ReactClipboardEvent,
+  DragEvent as ReactDragEvent,
   KeyboardEvent as ReactKeyboardEvent,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
@@ -47,6 +48,11 @@ type NotePaneProps = {
   syncEditorContent: () => void
   handleEditorInput: () => void
   handleEditorClick: (event: ReactMouseEvent<HTMLDivElement>) => void
+  handleEditorDragStart: (event: ReactDragEvent<HTMLDivElement>) => void
+  handleEditorDragOver: (event: ReactDragEvent<HTMLDivElement>) => void
+  handleEditorDrop: (event: ReactDragEvent<HTMLDivElement>) => void
+  handleEditorDragEnd: () => void
+  handleEditorPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void
   handleEditorKeyDown: (event: ReactKeyboardEvent<HTMLDivElement>) => void
   handleEditorPaste: (event: ReactClipboardEvent<HTMLDivElement>) => Promise<void> | void
   sidePanes: SidePanesProps
@@ -92,6 +98,11 @@ export function NotePane(props: NotePaneProps) {
     syncEditorContent,
     handleEditorInput,
     handleEditorClick,
+    handleEditorDragStart,
+    handleEditorDragOver,
+    handleEditorDrop,
+    handleEditorDragEnd,
+    handleEditorPointerDown,
     handleEditorKeyDown,
     handleEditorPaste,
     sidePanes,
@@ -204,9 +215,14 @@ export function NotePane(props: NotePaneProps) {
                   contentEditable
                   onBlur={syncEditorContent}
                   onClick={handleEditorClick}
+                  onDragEnd={handleEditorDragEnd}
+                  onDragOver={handleEditorDragOver}
+                  onDragStart={handleEditorDragStart}
+                  onDrop={handleEditorDrop}
                   onInput={handleEditorInput}
                   onKeyDown={handleEditorKeyDown}
                   onPaste={(event) => void handleEditorPaste(event)}
+                  onPointerDown={handleEditorPointerDown}
                   ref={editorRef}
                   style={{ zoom: editorZoom.toString() }}
                   suppressContentEditableWarning

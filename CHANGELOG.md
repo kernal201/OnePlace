@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.9 - 2026-03-17
+
+- Added direct cursor-based image dragging in notes so embedded images can be repositioned more naturally.
+- Disabled the browser's blocked native image drag path and routed image movement through the in-editor move flow.
+
 ## 0.1.8 - 2026-03-17
 
 - Modularized the app shell, editor actions, file actions, clipboard actions, and shared app model utilities.

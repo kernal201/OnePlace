@@ -4,8 +4,10 @@ import {
   useRef,
   type ClipboardEvent,
   type Dispatch,
+  type DragEvent,
   type MutableRefObject,
   type PointerEvent,
+  type PointerEvent as ReactPointerEvent,
   type RefObject,
   type SetStateAction,
 } from 'react'
@@ -30,6 +32,7 @@ type UseMediaAndDrawingArgs = {
   audioRecordingSeconds: number
   audioTimerRef: MutableRefObject<number | null>
   drawColor: string
+  editorRef: RefObject<HTMLDivElement | null>
   imageInputRef: RefObject<HTMLInputElement | null>
   inkDrawingRef: MutableRefObject<InkStroke | null>
   insertHtmlAtSelection: (html: string) => void
@@ -60,6 +63,7 @@ type UseMediaAndDrawingArgs = {
   speechTranscriptRef: MutableRefObject<string>
   recordingChunksRef: MutableRefObject<Blob[]>
   dictationRecognitionRef: MutableRefObject<BrowserSpeechRecognition | null>
+  syncEditorContent: () => void
   updatePage: (updates: PageUpdate) => void
   addAssetsToState: (assets: AppAsset[]) => void
 }
@@ -111,6 +115,7 @@ export const useMediaAndDrawing = ({
   audioRecordingSeconds,
   audioTimerRef,
   drawColor,
+  editorRef,
   imageInputRef,
   inkDrawingRef,
   insertHtmlAtSelection,
@@ -141,10 +146,149 @@ export const useMediaAndDrawing = ({
   speechTranscriptRef,
   recordingChunksRef,
   dictationRecognitionRef,
+  syncEditorContent,
   updatePage,
   addAssetsToState,
 }: UseMediaAndDrawingArgs) => {
   const liveInkPolylineRef = useRef<SVGPolylineElement | null>(null)
+  const draggedImageRef = useRef<HTMLElement | null>(null)
+  const handleWindowPointerMoveRef = useRef<(event: globalThis.PointerEvent) => void>(() => {})
+  const handleWindowPointerUpRef = useRef<(event: globalThis.PointerEvent) => void>(() => {})
+  const draggedImagePointerRef = useRef<{
+    element: HTMLElement
+    pointerId: number
+    startX: number
+    startY: number
+    latestX: number
+    latestY: number
+    isDragging: boolean
+  } | null>(null)
+
+  const getDropRangeFromPoint = (clientX: number, clientY: number) => {
+    if (document.caretRangeFromPoint) {
+      return document.caretRangeFromPoint(clientX, clientY)
+    }
+
+    if (document.caretPositionFromPoint) {
+      const position = document.caretPositionFromPoint(clientX, clientY)
+      if (!position) return null
+      const range = document.createRange()
+      range.setStart(position.offsetNode, position.offset)
+      range.collapse(true)
+      return range
+    }
+
+    return null
+  }
+
+  const cleanupDraggedImageStyles = useCallback((element: HTMLElement | null) => {
+    if (!element) return
+    element.classList.remove('dragging')
+    element.style.removeProperty('transform')
+  }, [])
+
+  const moveDraggedImageToPoint = useCallback(
+    (element: HTMLElement, clientX: number, clientY: number) => {
+      const editor = editorRef.current
+      if (!editor) return false
+
+      element.style.pointerEvents = 'none'
+      const dropTarget = document.elementFromPoint(clientX, clientY) as HTMLElement | null
+      element.style.removeProperty('pointer-events')
+
+      const targetBlock = dropTarget?.closest<HTMLElement>(
+        '.embedded-image, p, h1, h2, h3, ul, ol, table, blockquote, pre, figure, section, .attachment-card, .printout-card',
+      )
+
+      if (targetBlock && editor.contains(targetBlock) && targetBlock !== element && !element.contains(targetBlock)) {
+        const targetRect = targetBlock.getBoundingClientRect()
+        const insertBefore = clientY < targetRect.top + targetRect.height / 2
+        targetBlock.parentElement?.insertBefore(element, insertBefore ? targetBlock : targetBlock.nextSibling)
+        syncEditorContent()
+        return true
+      }
+
+      const dropRange = getDropRangeFromPoint(clientX, clientY)
+      if (dropRange && editor.contains(dropRange.startContainer) && !element.contains(dropRange.startContainer)) {
+        const anchorElement =
+          dropRange.startContainer instanceof HTMLElement
+            ? dropRange.startContainer
+            : dropRange.startContainer.parentElement
+        const anchorBlock = anchorElement?.closest<HTMLElement>(
+          'p, h1, h2, h3, ul, ol, table, blockquote, pre, figure, section, .attachment-card, .printout-card',
+        )
+
+        if (anchorBlock && editor.contains(anchorBlock) && anchorBlock !== element) {
+          const anchorRect = anchorBlock.getBoundingClientRect()
+          const insertBefore = clientY < anchorRect.top + anchorRect.height / 2
+          anchorBlock.parentElement?.insertBefore(element, insertBefore ? anchorBlock : anchorBlock.nextSibling)
+          syncEditorContent()
+          return true
+        }
+      }
+
+      if (editor.lastElementChild !== element) {
+        editor.appendChild(element)
+        syncEditorContent()
+        return true
+      }
+
+      return false
+    },
+    [editorRef, syncEditorContent],
+  )
+
+  const stopPointerImageDrag = useCallback(
+    (pointerId?: number, clientX?: number, clientY?: number) => {
+      const currentDrag = draggedImagePointerRef.current
+      if (!currentDrag) return
+      if (pointerId !== undefined && currentDrag.pointerId !== pointerId) return
+
+      window.removeEventListener('pointermove', handleWindowPointerMoveRef.current)
+      window.removeEventListener('pointerup', handleWindowPointerUpRef.current)
+      window.removeEventListener('pointercancel', handleWindowPointerUpRef.current)
+
+      const { element, isDragging } = currentDrag
+      cleanupDraggedImageStyles(element)
+
+      if (isDragging && clientX !== undefined && clientY !== undefined) {
+        moveDraggedImageToPoint(element, clientX, clientY)
+        window.setTimeout(() => {
+          keepCaretInView('smooth')
+        }, 0)
+      }
+
+      draggedImagePointerRef.current = null
+    },
+    [cleanupDraggedImageStyles, keepCaretInView, moveDraggedImageToPoint],
+  )
+
+  const handleWindowPointerMove = useCallback((event: globalThis.PointerEvent) => {
+    const currentDrag = draggedImagePointerRef.current
+    if (!currentDrag || currentDrag.pointerId !== event.pointerId) return
+
+    const deltaX = event.clientX - currentDrag.startX
+    const deltaY = event.clientY - currentDrag.startY
+    if (!currentDrag.isDragging && Math.abs(deltaX) + Math.abs(deltaY) < 6) return
+
+    currentDrag.isDragging = true
+    currentDrag.latestX = event.clientX
+    currentDrag.latestY = event.clientY
+    currentDrag.element.classList.add('dragging')
+    currentDrag.element.style.transform = `translate(${deltaX}px, ${deltaY}px)`
+  }, [])
+
+  const handleWindowPointerUp = useCallback(
+    (event: globalThis.PointerEvent) => {
+      stopPointerImageDrag(event.pointerId, event.clientX, event.clientY)
+    },
+    [stopPointerImageDrag],
+  )
+
+  useEffect(() => {
+    handleWindowPointerMoveRef.current = handleWindowPointerMove
+    handleWindowPointerUpRef.current = handleWindowPointerUp
+  }, [handleWindowPointerMove, handleWindowPointerUp])
 
   const clearAudioRecordingTimer = useCallback(() => {
     if (audioTimerRef.current) {
@@ -159,8 +303,13 @@ export const useMediaAndDrawing = ({
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop())
       liveInkPolylineRef.current?.remove()
       liveInkPolylineRef.current = null
+      window.removeEventListener('pointermove', handleWindowPointerMoveRef.current)
+      window.removeEventListener('pointerup', handleWindowPointerUpRef.current)
+      window.removeEventListener('pointercancel', handleWindowPointerUpRef.current)
+      cleanupDraggedImageStyles(draggedImagePointerRef.current?.element ?? null)
+      draggedImagePointerRef.current = null
     },
-    [clearAudioRecordingTimer, mediaStreamRef],
+    [cleanupDraggedImageStyles, clearAudioRecordingTimer, mediaStreamRef],
   )
 
   const loadAudioDevices = useCallback(async () => {
@@ -513,7 +662,7 @@ export const useMediaAndDrawing = ({
       .map(
         (image) => `
           <figure class="embedded-image" contenteditable="false">
-            <img alt="${escapeAttribute(image.name)}" data-asset-id="${image.assetId}" src="${image.dataUrl}" />
+            <img alt="${escapeAttribute(image.name)}" data-asset-id="${image.assetId}" draggable="false" src="${image.dataUrl}" />
             <figcaption>${escapeHtml(image.name)}</figcaption>
           </figure>
         `,
@@ -651,14 +800,97 @@ export const useMediaAndDrawing = ({
     return true
   }
 
+  const handleEditorDragStart = (event: DragEvent<HTMLDivElement>) => {
+    const target = event.target
+    if (!(target instanceof HTMLElement)) return
+
+    const imageFigure = target.closest<HTMLElement>('.embedded-image')
+    if (!imageFigure || !editorRef.current?.contains(imageFigure)) return
+
+    event.preventDefault()
+  }
+
+  const handleEditorDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (!draggedImageRef.current) return
+    event.preventDefault()
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move'
+    }
+  }
+
+  const handleEditorDrop = (event: DragEvent<HTMLDivElement>) => {
+    const draggedImage = draggedImageRef.current
+    if (!draggedImage) return
+
+    event.preventDefault()
+    const dropRange = getDropRangeFromPoint(event.clientX, event.clientY)
+    if (!dropRange) return
+    if (draggedImage.contains(dropRange.startContainer)) return
+
+    const editor = editorRef.current
+    if (!editor || !editor.contains(dropRange.startContainer)) return
+
+    const insertedNode = draggedImage
+    insertedNode.classList.remove('dragging')
+    dropRange.deleteContents()
+    dropRange.insertNode(insertedNode)
+
+    const trailingBreak = document.createElement('p')
+    trailingBreak.innerHTML = '<br />'
+    if (!insertedNode.nextSibling) {
+      insertedNode.parentNode?.appendChild(trailingBreak)
+    }
+
+    syncEditorContent()
+    window.setTimeout(() => {
+      keepCaretInView('smooth')
+    }, 0)
+    draggedImageRef.current = null
+  }
+
+  const handleEditorDragEnd = () => {
+    draggedImageRef.current?.classList.remove('dragging')
+    draggedImageRef.current = null
+  }
+
+  const handleEditorPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return
+
+    const target = event.target
+    if (!(target instanceof HTMLElement)) return
+
+    const imageFigure = target.closest<HTMLElement>('.embedded-image')
+    if (!imageFigure || !editorRef.current?.contains(imageFigure)) return
+
+    event.preventDefault()
+    draggedImagePointerRef.current = {
+      element: imageFigure,
+      isDragging: false,
+      latestX: event.clientX,
+      latestY: event.clientY,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+    }
+
+    window.addEventListener('pointermove', handleWindowPointerMoveRef.current)
+    window.addEventListener('pointerup', handleWindowPointerUpRef.current)
+    window.addEventListener('pointercancel', handleWindowPointerUpRef.current)
+  }
+
   return {
     beginInkStroke,
     clearInkStrokes,
     handleAttachmentSelection,
     handleEditorAssetClick,
+    handleEditorDragEnd,
+    handleEditorDragOver,
+    handleEditorDragStart,
+    handleEditorPointerDown,
     handleEditorPaste,
     handleImageSelection,
     handlePrintoutSelection,
+    handleEditorDrop,
     loadAudioDevices,
     moveInkStroke,
     openAudioPane,

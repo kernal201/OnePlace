@@ -1,6 +1,6 @@
 [package]
 name = "oneplace"
-version = "0.1.8"
+version = "0.1.9"
 description = "OnePlace desktop shell built with Tauri"
 authors = ["OpenAI"]
 edition = "2021"
