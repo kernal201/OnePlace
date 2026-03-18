@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.11 - 2026-03-18
+
+- Moved the `To Do Tag`, `Find Outlook Tasks`, `Email Page`, `Meeting Details`, `Dictate`, `Transcribe`, and `Copilot` actions out of Home and into the Insert tab.
+- Fixed the floating search results panel so it anchors and layers properly under the search box instead of colliding with the ribbon.
+
 ## 0.1.10 - 2026-03-18
 
 - Added local OneNote import support and desktop-side import plumbing for bringing notebook content into OnePlace.

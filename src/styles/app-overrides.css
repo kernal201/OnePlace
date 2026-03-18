@@ -16,6 +16,8 @@
   grid-template-columns: auto minmax(340px, 1fr) auto;
   min-height: 30px;
   padding: 0 10px 0 6px;
+  position: relative;
+  z-index: 30;
 }
 
 .titlebar-left,
@@ -98,7 +100,10 @@
   box-shadow: none;
   height: 26px;
   max-width: 490px;
+  overflow: visible;
   padding: 0 10px;
+  position: relative;
+  z-index: 40;
 }
 
 .search-icon {
@@ -173,6 +178,8 @@
   gap: 0;
   min-height: 27px;
   padding: 0 0 0 6px;
+  position: relative;
+  z-index: 20;
 }
 
 .tab-button {
@@ -250,6 +257,13 @@
   gap: 0;
   max-height: 420px;
   width: min(520px, calc(100vw - 40px));
+}
+
+.search-results-floating {
+  left: 0;
+  max-height: min(420px, calc(100vh - 120px));
+  right: auto;
+  top: calc(100% + 4px);
 }
 
 .search-results-toolbar,

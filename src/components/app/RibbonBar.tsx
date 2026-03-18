@@ -376,19 +376,39 @@ export function RibbonBar(props: RibbonBarProps) {
             <span className="ribbon-label">Media</span>
           </div>
           <div className="ribbon-cluster styles">
+            <button disabled={!canEditPage} onClick={addTagToCurrentPage} type="button">
+              <TagsIcon size={26} />
+              <span>To Do Tag</span>
+            </button>
             <button disabled={!canEditPage} onClick={openMeetingDetailsPane} type="button">
               <TableIcon size={26} />
               <span>Meeting Details</span>
+            </button>
+            <button disabled={!page} onClick={() => setIsTaskPaneOpen(true)} type="button">
+              <FormatMotivationIcon size={26} />
+              <span>Find Outlook Tasks</span>
+            </button>
+            <button disabled={!page} onClick={emailCurrentPage} type="button">
+              <ProjectIcon size={26} />
+              <span>Email Page</span>
             </button>
             <button disabled={!canEditPage} onClick={applyPageTemplate} type="button">
               <InsertFormattingIcon size={26} />
               <span>Template</span>
             </button>
+            <button disabled={!canEditPage} onClick={startDictation} type="button">
+              <SaveIcon size={26} />
+              <span>{isDictating ? 'Stop Dictate' : 'Dictate'}</span>
+            </button>
+            <button disabled={!canEditPage} onClick={startSpeechTranscription} type="button">
+              <ShowIcon size={26} />
+              <span>{isTranscribing ? 'Stop Transcribe' : 'Transcribe'}</span>
+            </button>
             <button disabled={!page} onClick={() => setIsCopilotOpen(true)} type="button">
               <InsertFormattingIcon size={26} />
               <span>Copilot</span>
             </button>
-            <span className="ribbon-label">Templates</span>
+            <span className="ribbon-label">Meeting Tools</span>
           </div>
         </section>
       )
@@ -822,36 +842,6 @@ export function RibbonBar(props: RibbonBarProps) {
           </button>
         </div>
 
-        <div className="ribbon-cluster home-quick-actions">
-          <button className="home-vertical-action" onClick={addTagToCurrentPage} type="button">
-            <TagsIcon size={22} />
-            <span>To Do Tag</span>
-          </button>
-          <button className="home-vertical-action" onClick={() => setIsTaskPaneOpen(true)} type="button">
-            <FormatMotivationIcon size={22} />
-            <span>Find Outlook Tasks</span>
-          </button>
-          <button className="home-vertical-action" onClick={emailCurrentPage} type="button">
-            <ProjectIcon size={22} />
-            <span>Email Page</span>
-          </button>
-          <button className="home-vertical-action" onClick={openMeetingDetailsPane} type="button">
-            <TableIcon size={22} />
-            <span>Meeting Details</span>
-          </button>
-          <button className="home-vertical-action" onClick={startDictation} type="button">
-            <SaveIcon size={22} />
-            <span>{isDictating ? 'Stop Dictate' : 'Dictate'}</span>
-          </button>
-          <button className="home-vertical-action" onClick={startSpeechTranscription} type="button">
-            <ShowIcon size={22} />
-            <span>{isTranscribing ? 'Stop Transcribe' : 'Transcribe'}</span>
-          </button>
-          <button className="home-vertical-action" onClick={() => setIsCopilotOpen(true)} type="button">
-            <InsertFormattingIcon size={22} />
-            <span>Copilot</span>
-          </button>
-        </div>
       </section>
     )
   }
