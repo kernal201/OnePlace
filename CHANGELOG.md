@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.10 - 2026-03-18
+
+- Added local OneNote import support and desktop-side import plumbing for bringing notebook content into OnePlace.
+- Added OneNote export/import helpers and supporting desktop integration hooks for the new workflow.
+- Refreshed the OnePlace branding and app icons across the web app and Tauri bundles.
+- Removed the duplicate toolbar version badge so the version only appears in the intended chrome locations.
+
 ## 0.1.9 - 2026-03-17
 
 - Added direct cursor-based image dragging in notes so embedded images can be repositioned more naturally.
