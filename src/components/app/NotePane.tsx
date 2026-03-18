@@ -129,9 +129,6 @@ export function NotePane(props: NotePaneProps) {
             </div>
           </div>
           <div className="note-toolbar-inline">
-            <span className="app-version-badge">
-              {appName} v{displayVersion}
-            </span>
             <button disabled={isCurrentSectionLocked} onClick={addTagToCurrentPage} type="button">
               {isTagPaneOpen ? 'Hide Tags' : 'Tags'}
             </button>
