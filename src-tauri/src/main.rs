@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine as _};
 use chrono::Utc;
 use printpdf::{BuiltinFont, Mm, PdfDocument};
 use serde::Serialize;
@@ -25,6 +26,35 @@ struct AppInfo {
     data_path: String,
     name: String,
     version: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ImportedOneNoteFile {
+    absolute_path: String,
+    contents: String,
+    extension: String,
+    modified_at: String,
+    name: String,
+    relative_dir: String,
+    relative_path: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ImportedOneNoteDirectory {
+    files: Vec<ImportedOneNoteFile>,
+    name: String,
+    path: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ImportedAssetData {
+    data_url: String,
+    mime_type: String,
+    name: String,
+    size: u64,
 }
 
 fn legacy_data_file_path(app: &AppHandle) -> Result<PathBuf, String> {
@@ -347,6 +377,122 @@ fn export_pdf_file(file_path: &Path, title: &str, created_at: &str, text_content
         .map_err(|err| err.to_string())
 }
 
+fn is_importable_onenote_extension(extension: &str) -> bool {
+    matches!(extension, "htm" | "html" | "md" | "mht" | "mhtml" | "txt")
+}
+
+fn to_rfc3339_string(metadata: &fs::Metadata) -> String {
+    metadata
+        .modified()
+        .ok()
+        .map(chrono::DateTime::<Utc>::from)
+        .map(|time| time.to_rfc3339())
+        .unwrap_or_else(|| Utc::now().to_rfc3339())
+}
+
+fn collect_onenote_export_files(
+    root: &Path,
+    current: &Path,
+    files: &mut Vec<ImportedOneNoteFile>,
+) -> Result<(), String> {
+    for entry in fs::read_dir(current).map_err(|err| err.to_string())? {
+        let entry = entry.map_err(|err| err.to_string())?;
+        let path = entry.path();
+        let metadata = entry.metadata().map_err(|err| err.to_string())?;
+
+        if metadata.is_dir() {
+            collect_onenote_export_files(root, &path, files)?;
+            continue;
+        }
+
+        let extension = path
+            .extension()
+            .and_then(|value| value.to_str())
+            .unwrap_or_default()
+            .to_ascii_lowercase();
+
+        if !is_importable_onenote_extension(&extension) {
+            continue;
+        }
+
+        let contents = fs::read_to_string(&path).map_err(|err| err.to_string())?;
+        let relative_path = path
+            .strip_prefix(root)
+            .map_err(|err| err.to_string())?
+            .to_string_lossy()
+            .replace('\\', "/");
+        let relative_dir = Path::new(&relative_path)
+            .parent()
+            .map(|parent| parent.to_string_lossy().replace('\\', "/"))
+            .unwrap_or_default();
+        let name = path
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .unwrap_or("Imported Page")
+            .to_string();
+
+        files.push(ImportedOneNoteFile {
+            absolute_path: path.display().to_string(),
+            contents,
+            extension,
+            modified_at: to_rfc3339_string(&metadata),
+            name,
+            relative_dir,
+            relative_path,
+        });
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+fn import_onenote_export_dir(path: String) -> Result<ImportedOneNoteDirectory, String> {
+    let root = PathBuf::from(&path);
+    if !root.exists() {
+        return Err("The selected folder does not exist.".to_string());
+    }
+
+    if !root.is_dir() {
+        return Err("The selected OneNote export path is not a folder.".to_string());
+    }
+
+    let mut files = Vec::new();
+    collect_onenote_export_files(&root, &root, &mut files)?;
+    files.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
+
+    let name = root
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("Imported OneNote Notebook")
+        .to_string();
+
+    Ok(ImportedOneNoteDirectory { files, name, path })
+}
+
+#[tauri::command]
+fn read_local_asset_file(path: String) -> Result<ImportedAssetData, String> {
+    let asset_path = PathBuf::from(&path);
+    let bytes = fs::read(&asset_path).map_err(|err| err.to_string())?;
+    let mime_type = mime_guess::from_path(&asset_path)
+        .first_or_octet_stream()
+        .essence_str()
+        .to_string();
+    let encoded = BASE64_STANDARD.encode(bytes.as_slice());
+    let data_url = format!("data:{};base64,{}", mime_type, encoded);
+    let name = asset_path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("attachment")
+        .to_string();
+
+    Ok(ImportedAssetData {
+        data_url,
+        mime_type,
+        name,
+        size: bytes.len() as u64,
+    })
+}
+
 #[tauri::command]
 fn export_page_file(
     file_path: String,
@@ -388,6 +534,8 @@ fn main() {
             save_data,
             get_app_info,
             open_notebook_dir,
+            import_onenote_export_dir,
+            read_local_asset_file,
             export_notebook_dir,
             export_page_file
         ])

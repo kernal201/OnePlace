@@ -6,7 +6,7 @@
 
 .titlebar,
 .tab-row {
-  background: #7d1fb2;
+  background: linear-gradient(180deg, #1683d1 0%, #0e6fb9 100%);
   border-bottom: 0;
 }
 
@@ -79,7 +79,7 @@
 }
 
 .workspace-pill {
-  color: #f6e7ff;
+  color: #d7efff;
 }
 
 .workspace-dot {
@@ -92,8 +92,8 @@
 }
 
 .titlebar-search {
-  background: #f3edf7;
-  border: 1px solid rgba(89, 18, 127, 0.55);
+  background: #eef7fd;
+  border: 1px solid rgba(9, 84, 135, 0.45);
   border-radius: 2px;
   box-shadow: none;
   height: 26px;
@@ -102,16 +102,16 @@
 }
 
 .search-icon {
-  color: #7b678d;
+  color: #507694;
 }
 
 .titlebar-search input {
-  color: #56436a;
+  color: #214865;
   font-size: 0.76rem;
 }
 
 .titlebar-search input::placeholder {
-  color: #7f7090;
+  color: #6c88a0;
 }
 
 .titlebar-chip,
@@ -169,18 +169,23 @@
 }
 
 .tab-row {
+  align-items: center;
   gap: 0;
   min-height: 27px;
   padding: 0 0 0 6px;
 }
 
 .tab-button {
-  border-radius: 0;
+  align-items: center;
+  border-radius: 4px 4px 0 0;
   color: rgba(255, 255, 255, 0.9);
+  display: inline-flex;
   font-size: 0.74rem;
   font-weight: 400;
+  line-height: 1;
   margin-top: 0;
-  padding: 7px 10px 5px;
+  min-height: 22px;
+  padding: 3px 10px 2px;
 }
 
 .tab-button:hover {
@@ -192,9 +197,12 @@
 .tab-button.active {
   background: #f3f0f1;
   border-color: transparent;
+  border-radius: 4px 4px 0 0;
   color: #202020;
   font-weight: 600;
   margin-bottom: 0;
+  min-height: 22px;
+  padding: 3px 10px 2px;
 }
 
 .tab-button.active::before {
@@ -204,10 +212,31 @@
 .ribbon-home {
   background: #f3f0f1;
   border-bottom: 1px solid #d7d1d5;
+  flex-wrap: wrap;
   min-height: 74px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   padding: 0 6px;
+}
+
+.ribbon-home .ribbon-cluster {
+  min-width: 0;
+}
+
+.home-basic-text,
+.home-styles,
+.home-tags,
+.home-quick-actions {
+  min-width: 0;
+}
+
+.home-quick-actions {
+  flex-wrap: wrap;
+}
+
+.home-vertical-action {
+  min-width: 56px;
+  padding: 0 8px;
 }
 
 .picker-menu-floating,
@@ -282,20 +311,20 @@
 
 .workspace {
   background: #efedf0;
-  grid-template-columns: 198px 230px minmax(760px, 1fr);
+  grid-template-columns: 198px 230px minmax(0, 1fr);
   min-height: 0;
 }
 
 .workspace.notebooks-hidden {
-  grid-template-columns: 0 230px minmax(760px, 1fr);
+  grid-template-columns: 0 230px minmax(0, 1fr);
 }
 
 .workspace.pages-hidden {
-  grid-template-columns: 198px 0 minmax(760px, 1fr);
+  grid-template-columns: 198px 0 minmax(0, 1fr);
 }
 
 .workspace.notebooks-hidden.pages-hidden {
-  grid-template-columns: minmax(760px, 1fr);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .notebooks-pane,

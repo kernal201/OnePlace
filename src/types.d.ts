@@ -9,6 +9,29 @@ interface DesktopAppInfo {
   version: string;
 }
 
+interface ImportedOneNoteFile {
+  absolutePath: string;
+  contents: string;
+  extension: string;
+  modifiedAt: string;
+  name: string;
+  relativeDir: string;
+  relativePath: string;
+}
+
+interface ImportedOneNoteDirectory {
+  files: ImportedOneNoteFile[];
+  name: string;
+  path: string;
+}
+
+interface ImportedAssetData {
+  dataUrl: string;
+  mimeType: string;
+  name: string;
+  size: number;
+}
+
 interface SpeechRecognitionAlternative {
   transcript: string;
   confidence: number;

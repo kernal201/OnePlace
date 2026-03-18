@@ -82,13 +82,21 @@
 
 .app-badge {
   align-items: center;
-  background: linear-gradient(180deg, #3b7cff 0%, #245de0 100%);
+  background: rgba(255, 255, 255, 0.88);
   border-radius: 7px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
   display: grid;
   height: 24px;
+  overflow: hidden;
   place-items: center;
   width: 24px;
+}
+
+.app-badge-image {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
 }
 
 .quick-action,

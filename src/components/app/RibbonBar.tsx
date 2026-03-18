@@ -57,6 +57,8 @@ type RibbonBarProps = {
   recentNotebookEntries: RecentNotebookEntry[]
   loadNotebookFromPath: (path: string) => void
   openNotebook: () => void
+  importOneNoteExport: () => Promise<void> | void
+  isImportingOneNoteExport: boolean
   saveNotebookAs: () => Promise<void> | void
   exportCurrentPage: () => Promise<void> | void
   saveNow: () => Promise<void> | void
@@ -149,6 +151,8 @@ export function RibbonBar(props: RibbonBarProps) {
     recentNotebookEntries,
     loadNotebookFromPath,
     openNotebook,
+    importOneNoteExport,
+    isImportingOneNoteExport,
     saveNotebookAs,
     exportCurrentPage,
     saveNow,
@@ -247,6 +251,10 @@ export function RibbonBar(props: RibbonBarProps) {
             <button onClick={openNotebook} type="button">
               <FolderIcon size={26} />
               <span>Open Notebook</span>
+            </button>
+            <button disabled={isImportingOneNoteExport} onClick={() => void importOneNoteExport()} type="button">
+              <NotebookStackIcon size={26} />
+              <span>{isImportingOneNoteExport ? 'Importing OneNote...' : 'Import OneNote'}</span>
             </button>
             <button onClick={() => void saveNotebookAs()} type="button">
               <SaveIcon size={26} />

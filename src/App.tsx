@@ -40,6 +40,7 @@ import { useMediaAndDrawing } from './features/app/useMediaAndDrawing'
 import { useNavigationActions } from './features/app/useNavigationActions'
 import { useNavigationHistory } from './features/app/useNavigationHistory'
 import { useNotebookPageActions } from './features/app/useNotebookPageActions'
+import { useOneNoteExportImport } from './features/app/useOneNoteExportImport'
 import { usePageAssistActions } from './features/app/usePageAssistActions'
 import { useReviewHistory } from './features/app/useReviewHistory'
 import { useSectionTaskActions } from './features/app/useSectionTaskActions'
@@ -192,11 +193,16 @@ function App() {
     saveTimerRef: saveTimer,
     trackedRecentPageRef,
   })
+  const { importOneNoteExport, isImportingOneNoteExport } = useOneNoteExportImport({
+    setActiveTab: () => setActiveTab('Home'),
+    setAppState,
+    setSaveLabel,
+  })
 
   useEffect(() => {
     const pageTitle = page?.title?.trim() || 'Untitled Page'
     const notebookTitle = notebook?.name?.trim() || 'Notebook'
-    const nextTitle = `${isDirty ? '* ' : ''}${pageTitle} - ${notebookTitle} - OneNote`
+    const nextTitle = `${isDirty ? '* ' : ''}${pageTitle} - ${notebookTitle} - OnePlace`
     document.title = nextTitle
   }, [isDirty, notebook?.name, page?.title])
 
@@ -645,7 +651,7 @@ function App() {
         : dragState?.type === 'page'
           ? 'Moving page'
           : ''
-  const windowTitle = `${page?.title?.trim() || 'Untitled Page'} - ${notebook?.name ?? 'Notebook'} - OneNote`
+  const windowTitle = `${page?.title?.trim() || 'Untitled Page'} - ${notebook?.name ?? 'Notebook'} - OnePlace`
   const saveStatusText = isDirty ? `${saveLabel} · Unsaved changes` : saveLabel
   const displayVersion = appInfo?.version ?? __APP_VERSION__
   const hasSidePane =
@@ -937,6 +943,7 @@ function App() {
         fontSizeMenuRef,
         goBack,
         goForward,
+        importOneNoteExport,
         insertChecklist,
         insertExternalLink,
         insertInternalPageLink,
@@ -946,6 +953,7 @@ function App() {
         isFontMenuOpen,
         isFontSizeMenuOpen,
         isHistoryPaneOpen,
+        isImportingOneNoteExport,
         isCurrentSectionLocked,
         isNotebookPaneVisible,
         isPagesPaneVisible,

@@ -128,6 +128,9 @@ export const pickDirectory = async (title: string): Promise<string | null> => {
 export const pickNotebookDirectory = async (): Promise<string | null> =>
   pickDirectory('Open Notebook Folder')
 
+export const pickOneNoteExportDirectory = async (): Promise<string | null> =>
+  pickDirectory('Import OneNote Export Folder')
+
 export const pickExportFilePath = async (defaultPath: string): Promise<string | null> =>
   save({
     defaultPath,
@@ -146,6 +149,12 @@ export const exportNotebookDirectory = async (
   path: string,
   notebook: string,
 ): Promise<DesktopSaveResult> => invoke<DesktopSaveResult>('export_notebook_dir', { notebook, path })
+
+export const importOneNoteExportDirectory = async (path: string): Promise<ImportedOneNoteDirectory> =>
+  invoke<ImportedOneNoteDirectory>('import_onenote_export_dir', { path })
+
+export const readLocalAssetFile = async (path: string): Promise<ImportedAssetData> =>
+  invoke<ImportedAssetData>('read_local_asset_file', { path })
 
 export const exportPageFile = async (
   filePath: string,

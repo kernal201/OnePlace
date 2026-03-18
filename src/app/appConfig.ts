@@ -1,0 +1,1 @@
+export const ONEPLACE_ONENOTE_CLIENT_ID = ''

@@ -2,7 +2,6 @@ import type { RefObject, ReactNode } from 'react'
 import type { SearchFilter, SearchResult, SearchScope } from '../../app/appModel'
 import {
   ChevronDownIcon,
-  OneNoteLogoIcon,
   SaveIcon,
   SearchIcon,
   UndoIcon,
@@ -63,9 +62,6 @@ export function TitleBar(props: TitleBarProps) {
     <header className="titlebar">
       <div className="titlebar-left">
         <div className="titlebar-brand">
-          <div className="app-badge">
-            <OneNoteLogoIcon size={20} />
-          </div>
           <button className="quick-action icon-only" onClick={onSave} type="button">
             <SaveIcon size={16} />
           </button>
@@ -87,7 +83,7 @@ export function TitleBar(props: TitleBarProps) {
           <span className="workspace-dot" />
           <span className="workspace-pill">Non-Business</span>
           <span className="workspace-dot" />
-          <span className="workspace-app">Microsoft OneNote</span>
+          <span className="workspace-app">OnePlace</span>
           <ChevronDownIcon size={11} />
         </div>
       </div>
