@@ -1,93 +1,112 @@
 # OnePlace
 
-OnePlace is a desktop note-taking app built with React, Vite, TypeScript, and Tauri.
+OnePlace is a desktop note-taking app inspired by OneNote, built with React, TypeScript, Vite, and Tauri.
+
+It is designed around fast notebook navigation, rich-page editing, desktop-friendly workflows, and a layout that feels familiar if you like section/page based note apps.
+
+## What OnePlace Does
+
+- Notebook, section group, section, and page organization
+- Inline page and section rename/create flows
+- Rich text editing with a ribbon-style UI
+- Image, file, audio note, and printout insertion
+- Drawing / ink layer support
+- Review, history, tagging, and task workflows
+- Desktop packaging through Tauri for Windows
+
+## Current Direction
+
+Recent work has focused on making the app feel more like a practical desktop notebook:
+
+- more modular app structure
+- easier notebook and page management
+- improved ribbon UX
+- better drawing behavior
+- direct image movement inside notes
+
+See the latest shipped changes in [CHANGELOG.md](./CHANGELOG.md).
+
+## Download
+
+The latest public Windows builds are on GitHub Releases:
+
+- [OnePlace Releases](https://github.com/kernal201/OnePlace/releases)
+
+For most Windows users, the file to download is:
+
+- `OnePlace_<version>_x64-setup.exe`
+
+That is the installer. End users do not need this repo, Node.js, Rust, or the source tree.
 
 ## Development
 
-Requirements:
+### Requirements
 
 - Node.js 20+
 - Rust toolchain
 - Visual Studio C++ build tools on Windows
 
-Run locally:
+### Run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-The Tauri shell will start the desktop app and use the Vite frontend in dev mode.
+This starts the Tauri desktop app and uses the Vite frontend in development mode.
 
-## Build A Windows Installer
-
-This project is configured to generate a Windows NSIS installer.
-
-Build it with:
+### Run the built web output locally
 
 ```bash
-npm install
-npm run build:installer
+npm run build:web
+npm run preview
 ```
 
-Installer output:
+## Build
 
-- `src-tauri/target/release/bundle/nsis/OnePlace_<version>_x64-setup.exe`
+### Build the desktop app
 
-The unpacked executable is also produced under:
+```bash
+npm run build
+```
 
-- `src-tauri/target/release/oneplace.exe`
+This produces:
 
-## Install For End Users
+- desktop executable: `src-tauri/target/release/oneplace.exe`
+- NSIS installer: `src-tauri/target/release/bundle/nsis/OnePlace_<version>_x64-setup.exe`
+- MSI installer: `src-tauri/target/release/bundle/msi/OnePlace_<version>_x64_en-US.msi`
 
-End users do not need this repo, Node.js, Rust, or the `src-tauri/...` folder.
+### Build a signed updater release
 
-They only need the installer `.exe`.
+This repo includes a signed updater release flow, but it requires a configured Tauri private signing key.
 
-Users should download the installer from the GitHub Releases page for this repo:
+```bash
+npm run build:release
+npm run release:publish
+```
 
-- `https://github.com/ShadowKernal/OnePlace/releases`
+If the signing key is not configured, normal desktop bundles can still be built and published manually as standard GitHub release assets.
 
-Ship the generated NSIS installer to users. They can install it by:
+## Release Notes
 
-1. Downloading `OnePlace_<version>_x64-setup.exe`
-2. Saving it anywhere on their PC, such as `Downloads`
-3. Double-clicking the installer
-3. Launching `OnePlace` from the Start menu
+- Version is defined in:
+  - `package.json`
+  - `src-tauri/tauri.conf.json`
+  - `src-tauri/Cargo.toml`
+- Release notes are sourced from `CHANGELOG.md`
+- GitHub releases currently publish to:
+  - `https://github.com/kernal201/OnePlace`
 
-The installer is configured for per-user installation, so it should not require admin access in the normal case.
+## Tech Stack
 
-## What To Send People
+- React 19
+- TypeScript
+- Vite
+- Tauri 2
+- Rust
 
-Send this installer file to Windows users:
+## Repo Notes
 
-- `src-tauri/target/release/bundle/nsis/OnePlace_0.1.0_x64-setup.exe`
-
-Do not send the unpacked `oneplace.exe` from `src-tauri/target/release/`. The correct file to distribute is the `-setup.exe` installer.
-
-Recommended distribution options:
-
-- Upload the installer to a GitHub Release
-- Send the installer file directly
-- Upload it to Google Drive, Dropbox, or another file host
-
-If someone downloads `OnePlace_0.1.0_x64-setup.exe`, they can run it directly on Windows.
-
-Recommended public download location:
-
-- `https://github.com/ShadowKernal/OnePlace/releases`
-
-## macOS Release Notes
-
-macOS builds are architecture-specific.
-
-- Intel Macs need the `x64` macOS release asset
-- Apple Silicon Macs need the `aarch64` macOS release asset
-
-If you publish only one macOS `.dmg`, one class of Mac users will get a build that does not launch.
-
-## Notes
-
-- Tauri bundling is enabled in `src-tauri/tauri.conf.json`.
-- The current installer target is `nsis`.
-- If you later want MSI output too, add it to `bundle.targets` and rebuild.
+- Frontend source lives under `src/`
+- Tauri / Rust source lives under `src-tauri/`
+- The app is actively being refactored toward smaller, more modular features and components
