@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.12 - 2026-03-18
+
+- Refreshed migrated Windows Start Menu and desktop shortcuts after install so upgraded installs pick up the current OnePlace icon instead of preserving stale shortcut icon metadata.
+
 ## 0.1.11 - 2026-03-18
 
 - Moved the `To Do Tag`, `Find Outlook Tasks`, `Email Page`, `Meeting Details`, `Dictate`, `Transcribe`, and `Copilot` actions out of Home and into the Insert tab.
